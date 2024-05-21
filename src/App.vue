@@ -10,52 +10,35 @@ async function createCompletionsChat() {
   try {
     btnText.value = 'Thinking...🤔'
 
-    const userMessages = [{ role: 'user', content: content.value }]
+    // 请求后端接口 http://localhost:8080/v1/ai/search
+    // 参数格式如下：
+    // {
+    //  "question": "What is the capital of China?"
+    // }
+    // 返回结果格式如下：
+    // {
+    //  "answer": "Beijing"
+    // }
 
-    const requestData = JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      messages: userMessages,
-      stream: true,
-    })
-
-    const fetchOptions = {
+    const question = { 'question': content.value }
+    console.log('question:', question)
+    const response = await fetch('http://localhost:8080/v1/ai/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPEN_API_KEY}`,
       },
-      body: requestData,
+      body: JSON.stringify(question),
+    })
+    // this.$toast.info(`HTTP status: ${response.status}`)
+    if (!response.ok) {
+      console.log('HTTP error! status:', response.status)
+      // this.$toast.error(`HTTP error! status: ${response.status}`)
+      return
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', fetchOptions)
-    const reader = response.body.getReader()
-    res.value = ''
+    const data = await response.json()
+    res.value = data.answer
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      const chunkStr = new TextDecoder('utf-8').decode(value)
-      const lines = chunkStr
-        .split('\n')
-        .filter((line) => line !== '' && line.length > 0)
-        .map((line) => line.replace(/^data: /, '').trim())
-        .filter((line) => line !== '[DONE]')
-        .map((line) => JSON.parse(line))
-      for (const line of lines) {
-        const {
-          choices: [
-            {
-              delta: { content },
-            },
-          ],
-        } = line
-        if (content) {
-          res.value += content
-        }
-      }
-    }
-    console.log('Stream ended.')
   } catch (error) {
     console.error(error)
     res.value = error.response.data.error.message
@@ -95,7 +78,8 @@ const askAi = () => {
 h1 {
   margin-bottom: 64px;
 }
-/* 
+
+/*
 .chat {
 } */
 .input {
@@ -127,7 +111,7 @@ h1 {
   }
 
   100% {
-    transform: translateX-(5px);
+    transform: translateX(5px);
   }
 }
 
@@ -205,6 +189,7 @@ button svg {
   align-items: center;
   justify-content: end;
 }
+
 .btn {
   display: flex;
   justify-content: center;
@@ -219,7 +204,7 @@ button svg {
   animation: gradient_301 5s ease infinite;
   border: double 4px transparent;
   background-image: linear-gradient(#212121, #212121),
-    linear-gradient(137.48deg, #ffdb3b 10%, #fe53bb 45%, #8f51ea 67%, #0044ff 87%);
+  linear-gradient(137.48deg, #ffdb3b 10%, #fe53bb 45%, #8f51ea 67%, #0044ff 87%);
   background-origin: border-box;
   background-clip: content-box, border-box;
 }
