@@ -29,19 +29,16 @@ async function createCompletionsChat() {
       },
       body: JSON.stringify(question),
     })
-    // this.$toast.info(`HTTP status: ${response.status}`)
     if (!response.ok) {
       console.log('HTTP error! status:', response.status)
-      // this.$toast.error(`HTTP error! status: ${response.status}`)
       return
     }
 
     const data = await response.json()
     res.value = data.answer
-
   } catch (error) {
     console.error(error)
-    res.value = error.response.data.error.message
+    res.value = error
   } finally {
     btnText.value = BTN_TEXT
   }
