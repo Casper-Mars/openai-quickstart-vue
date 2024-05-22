@@ -22,38 +22,79 @@ export default {
         return
       }
       try {
-        messages.value.push({content: question, role: "您", avatar: userAvatar});
+        messages.value.push({content: question, role: "human", avatar: userAvatar});
         inputMessage.value = '';
         curStatus.value = '思考中...🤔';
         // 请求后端接口 http://localhost:8080/v1/ai/search
         // 参数格式如下：
         // {
-        //  "question": "What is the capital of China?"
+        //   "msgs": [
+        //   {
+        //     "content": "用户如何取消订单？",
+        //     "role": "human"
+        //   },
+        //   {
+        //     "content": "xxxxxx",
+        //     "role": "ai"
+        //   },
+        //   {
+        //     "content": "xxxxxx",
+        //     "role": "human"
+        //   }
+        // ]
         // }
         // 返回结果格式如下：
         // {
-        //  "answer": "Beijing"
+        //   "msgs": [
+        //   {
+        //     "content": "用户如何取消订单？",
+        //     "role": "human"
+        //   },
+        //   {
+        //     "content": "xxxxxx",
+        //     "role": "ai"
+        //   },
+        //   {
+        //     "content": "xxxxxx",
+        //     "role": "human"
+        //   },
+        //   {
+        //     "content": "xxxxxx",
+        //     "role": "ai"
+        //   }
+        // ]
         // }
-        const response = await fetch('http://192.168.36.70:8081/v1/ai/search', {
+        const requestBody = {
+          "msgs": messages.value
+        };
+
+        const response = await fetch('http://192.168.36.70:8081/v2/ai/search', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({'question': question}),
+          body: JSON.stringify(requestBody),
         })
         if (!response.ok) {
           console.log('HTTP error! status:', response.status)
           return;
         }
-
         const data = await response.json()
-        messages.value.push({content: md.render(data.answer), role: "电竞需求助手", avatar: aiAvatar});
+        let show_msg = []
+        data.msgs.forEach(msg => {
+          if (msg.role === 'human') {
+            show_msg.push({content: msg.content, role: "human", avatar: userAvatar});
+          } else {
+            show_msg.push({content: msg.content, role: "ai", avatar: aiAvatar});
+          }
+        });
+        messages.value = show_msg
       } catch (error) {
         console.error(error)
       } finally {
         curStatus.value = '😴'
       }
-    };
+    }
 
     return {
       inputMessage,
@@ -61,6 +102,7 @@ export default {
       chatHistory,
       curStatus,
       sendMessage,
+      md,
     };
   },
 };
@@ -76,7 +118,7 @@ export default {
 
         <div class="message flex-container">
           <img :src="message.avatar" alt="role avatar" class="role-avatar">
-          <div class="message-box" v-html="message.content"></div>
+          <div class="message-box" v-html="md.render(message.content)"></div>
         </div>
       </div>
     </div>
