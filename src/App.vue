@@ -1,77 +1,136 @@
-<script setup>
-import { ref, nextTick } from 'vue'
+<script>
+import {ref, watch} from 'vue';
+import MarkdownIt from 'markdown-it';
 
-const content = ref('')
-const BTN_TEXT = '确认 🚀'
-const res = ref('✅ 回答会显示在这里.')
-const btnText = ref(BTN_TEXT)
+export default {
+  setup() {
+    const inputMessage = ref('');
+    const curStatus = ref('😴');
+    const messages = ref([]);
+    const chatHistory = ref(null);
+    const md = new MarkdownIt();
 
-async function createCompletionsChat() {
-  try {
-    btnText.value = '思考中...🤔'
+    watch(messages, () => {
+      chatHistory.value.scrollTop = chatHistory.value.scrollHeight;
+    });
 
-    // 请求后端接口 http://localhost:8080/v1/ai/search
-    // 参数格式如下：
-    // {
-    //  "question": "What is the capital of China?"
-    // }
-    // 返回结果格式如下：
-    // {
-    //  "answer": "Beijing"
-    // }
+    async function sendMessage() {
+      const question = inputMessage.value.trim()
+      if (question === '') {
+        return
+      }
+      try {
+        messages.value.push({content: question, role: "您", avatar: ""});
+        inputMessage.value = '';
+        curStatus.value = '思考中...🤔';
+        // 请求后端接口 http://localhost:8080/v1/ai/search
+        // 参数格式如下：
+        // {
+        //  "question": "What is the capital of China?"
+        // }
+        // 返回结果格式如下：
+        // {
+        //  "answer": "Beijing"
+        // }
+        const response = await fetch('http://192.168.36.70:8081/v1/ai/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({'question': question}),
+        })
+        if (!response.ok) {
+          console.log('HTTP error! status:', response.status)
+          return;
+        }
 
-    const question = { 'question': content.value }
-    console.log('question:', question)
-    const response = await fetch('http://192.168.36.70:8081/v1/ai/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(question),
-    })
-    if (!response.ok) {
-      console.log('HTTP error! status:', response.status)
-      return
-    }
+        const data = await response.json()
+        messages.value.push({content: md.render(data.answer), role: "电竞需求助手", avatar: ""});
+      } catch (error) {
+        console.error(error)
+      } finally {
+        curStatus.value = '😴'
+      }
+    };
 
-    const data = await response.json()
-    res.value = data.answer
-  } catch (error) {
-    console.error(error)
-    res.value = error
-  } finally {
-    btnText.value = BTN_TEXT
-  }
-}
+    return {
+      inputMessage,
+      messages,
+      chatHistory,
+      curStatus,
+      sendMessage,
+    };
+  },
+};
 
-const askAi = () => {
-  createCompletionsChat()
-}
+
 </script>
 
 <template>
-  <h2>🤖️ 电竞需求助手</h2>
-  <div class="chat">
-    <input class="input" placeholder="输入你的问题🌽" v-model="content" clear />
-    <div class="button-block">
-      <button type="button" @click="askAi" class="btn">
-        <strong>{{ btnText }}</strong>
-        <div id="container-stars">
-          <div id="stars"></div>
+  <div class="chat-container">
+    <h2>🤖️ 电竞需求助手({{ curStatus }})</h2>
+    <div class="chat-history" ref="chatHistory">
+      <div v-for="(message, index) in messages" :key="index" class="message">
+        <div class="message">
+          <div class="role-text">{{ message.role }}</div>
+          <div v-html="message.content"></div>
         </div>
-        <div id="glow">
-          <div class="circle"></div>
-          <div class="circle"></div>
-        </div>
-      </button>
+      </div>
     </div>
-    <div class="card">
-      <pre>{{ res }}</pre>
+    <div class="chat-input">
+      <input type="text" v-model="inputMessage" placeholder="🌽输入你的消息，回车确认🚀。例如：如何申请成为电竞大神？"
+             @keyup.enter="sendMessage"/>
     </div>
   </div>
 </template>
 
 <style scoped>
+
+.role-text {
+  font-weight: bold;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-history {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 1em;
+  border-bottom: 1px solid #ccc;
+}
+
+.chat-input {
+  display: flex;
+  justify-content: space-between;
+  padding: 1em;
+  border-top: 1px solid #ccc;
+}
+
+.chat-input input {
+  flex-grow: 1;
+  margin-right: 1em;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px; /* 修改这里 */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  font-size: 16px;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.chat-input input:focus {
+  border-color: #007BFF;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+.message {
+  margin-bottom: 1em;
+}
+
 h1 {
   margin-bottom: 64px;
 }
