@@ -2,13 +2,13 @@
 import { ref, nextTick } from 'vue'
 
 const content = ref('')
-const BTN_TEXT = 'Submit 🚀'
-const res = ref('✅ The answer will be displayed here.')
+const BTN_TEXT = '确认 🚀'
+const res = ref('✅ 回答会显示在这里.')
 const btnText = ref(BTN_TEXT)
 
 async function createCompletionsChat() {
   try {
-    btnText.value = 'Thinking...🤔'
+    btnText.value = '思考中...🤔'
 
     // 请求后端接口 http://localhost:8080/v1/ai/search
     // 参数格式如下：
@@ -52,7 +52,7 @@ const askAi = () => {
 <template>
   <h2>🤖️ 电竞需求助手</h2>
   <div class="chat">
-    <input class="input" placeholder="Ask me about...🌽" v-model="content" clear />
+    <input class="input" placeholder="输入你的问题🌽" v-model="content" clear />
     <div class="button-block">
       <button type="button" @click="askAi" class="btn">
         <strong>{{ btnText }}</strong>
