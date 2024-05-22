@@ -9,6 +9,8 @@ export default {
     const messages = ref([]);
     const chatHistory = ref(null);
     const md = new MarkdownIt();
+    const userAvatar = "https://obs-cdn.52tt.com/tt/fe-moss/web/esport/20240522172635_89834367.png"
+    const aiAvatar = "https://obs-cdn.52tt.com/tt/fe-moss/web/esport/20240522172655_67347498.png"
 
     watch(messages, () => {
       chatHistory.value.scrollTop = chatHistory.value.scrollHeight;
@@ -20,7 +22,7 @@ export default {
         return
       }
       try {
-        messages.value.push({content: question, role: "您", avatar: ""});
+        messages.value.push({content: question, role: "您", avatar: userAvatar});
         inputMessage.value = '';
         curStatus.value = '思考中...🤔';
         // 请求后端接口 http://localhost:8080/v1/ai/search
@@ -45,7 +47,7 @@ export default {
         }
 
         const data = await response.json()
-        messages.value.push({content: md.render(data.answer), role: "电竞需求助手", avatar: ""});
+        messages.value.push({content: md.render(data.answer), role: "电竞需求助手", avatar: aiAvatar});
       } catch (error) {
         console.error(error)
       } finally {
@@ -71,9 +73,10 @@ export default {
     <h2>🤖️ 电竞需求助手({{ curStatus }})</h2>
     <div class="chat-history" ref="chatHistory">
       <div v-for="(message, index) in messages" :key="index" class="message">
-        <div class="message">
-          <div class="role-text">{{ message.role }}</div>
-          <div v-html="message.content"></div>
+
+        <div class="message flex-container">
+          <img :src="message.avatar" alt="role avatar" class="role-avatar">
+          <div class="message-box" v-html="message.content"></div>
         </div>
       </div>
     </div>
@@ -88,6 +91,26 @@ export default {
 
 .role-text {
   font-weight: bold;
+}
+
+.flex-container {
+  display: flex;
+  align-items: center;
+}
+
+.message-box {
+  padding: 10px;
+  margin: 5px 0;
+  /*background-color: #f0f0f0;*/
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.role-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
 }
 
 .chat-container {
