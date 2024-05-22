@@ -22,7 +22,7 @@ async function createCompletionsChat() {
 
     const question = { 'question': content.value }
     console.log('question:', question)
-    const response = await fetch('http://localhost:8080/v1/ai/search', {
+    const response = await fetch('http://192.168.36.70:8081/v1/ai/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ const askAi = () => {
 </script>
 
 <template>
-  <h2>🤖️ My ChatGPT</h2>
+  <h2>🤖️ 电竞需求助手</h2>
   <div class="chat">
     <input class="input" placeholder="Ask me about...🌽" v-model="content" clear />
     <div class="button-block">
