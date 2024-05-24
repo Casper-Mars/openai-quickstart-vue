@@ -1,5 +1,5 @@
 <script>
-import { ref, watch } from 'vue'
+import {ref, watch, nextTick} from 'vue'
 import MarkdownIt from 'markdown-it'
 
 export default {
@@ -15,7 +15,9 @@ export default {
 
 
     watch(messages, () => {
-      chatHistory.value.scrollTop = chatHistory.value.scrollHeight
+      nextTick(() => {
+        chatHistory.value.scrollTop = chatHistory.value.scrollHeight
+      })
     })
 
     async function sendMessage() {
@@ -24,7 +26,7 @@ export default {
         return
       }
       try {
-        messages.value.push({ content: question, role: 'human', avatar: userAvatar })
+        messages.value.push({content: question, role: 'human', avatar: userAvatar})
         inputMessage.value = ''
         curStatus.value = '思考中...🤔'
         // 请求后端接口 http://localhost:8080/v1/ai/search
@@ -85,9 +87,9 @@ export default {
         let show_msg = []
         data.msgs.forEach(msg => {
           if (msg.role === 'human') {
-            show_msg.push({ content: msg.content, role: 'human', avatar: userAvatar })
+            show_msg.push({content: msg.content, role: 'human', avatar: userAvatar})
           } else {
-            show_msg.push({ content: msg.content, role: 'ai', avatar: aiAvatar })
+            show_msg.push({content: msg.content, role: 'ai', avatar: aiAvatar})
           }
         })
         messages.value = show_msg
@@ -118,7 +120,6 @@ export default {
     <h2>🤖️ 电竞需求助手({{ curStatus }})</h2>
     <div class="chat-history" :style="{ height: screenHeight-500 + 'px' }" ref="chatHistory">
       <div v-for="(message, index) in messages" :key="index" class="message">
-
         <div class="message flex-container">
           <img :src="message.avatar" alt="role avatar" class="role-avatar">
           <div class="message-box" v-html="md.render(message.content)"></div>
@@ -127,7 +128,7 @@ export default {
     </div>
     <div class="chat-input">
       <input type="text" v-model="inputMessage" placeholder="🌽输入你的消息，回车确认🚀。例如：如何申请成为电竞大神？"
-             @keyup.enter="sendMessage" />
+             @keyup.enter="sendMessage"/>
     </div>
   </div>
 </template>
